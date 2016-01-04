@@ -1,0 +1,117 @@
+#!/bin/sh
+# A dummy resource for the pessimistic scenario
+# of the promote/demote the rabbitmq OCF RA
+: ${OCF_FUNCTIONS_DIR=${OCF_ROOT}/lib/heartbeat}
+: ${HA_LOGTAG="lrmd"}
+: ${HA_LOGFACILITY="daemon"}
+. ${OCF_FUNCTIONS_DIR}/ocf-shellfuncs
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+LL="dummy"
+action_status() {
+    local LH="${LL} action_status():"
+    ocf_log info "${LH} I'm OK"
+    return $OCF_SUCCESS
+}
+action_monitor() {
+    local LH="${LL} action_monitor():"
+    ocf_log info "${LH} It's OK"
+    return $OCF_SUCCESS
+}
+action_start() {
+    local LH="${LL} action_start():"
+    ocf_log info "${LH} Started"
+    return $OCF_SUCCESS
+}
+action_stop() {
+    local LH="${LL} action_stop():"
+    ocf_log info "${LH} Stopped"
+    return $OCF_SUCCESS
+}
+action_notify() {
+    local LH="${LL} action_notify():"
+    ocf_log info "${LH} Notifying..."
+    if [ "${OCF_RESKEY_CRM_meta_notify_type}" = 'pre' ] ; then
+        # PRE- anything notify section
+        case "$OCF_RESKEY_CRM_meta_notify_operation" in
+            promote)
+                ocf_log info "${LH} pre-promote OK"
+                return $OCF_SUCCESS
+                #return $OCF_NOT_RUNNING
+                #return $OCF_ERR_GENERIC
+                #exit $OCF_FAILED_MASTER
+                ;;
+            *)
+                ;;
+        esac
+    fi
+    if [ "${OCF_RESKEY_CRM_meta_notify_type}" = 'post' ] ; then
+        # POST- anything notify section
+        case "$OCF_RESKEY_CRM_meta_notify_operation" in
+            promote)
+                ocf_log info "${LH} post-promote ERROR"
+                #return $OCF_SUCCESS
+                #return $OCF_NOT_RUNNING
+                return $OCF_ERR_GENERIC
+                #exit $OCF_FAILED_MASTER
+                ;;
+            start)
+                ocf_log info "${LH} post-start ERROR"
+                #return $OCF_SUCCESS
+                #return $OCF_NOT_RUNNING
+                return $OCF_ERR_GENERIC
+                #exit $OCF_FAILED_MASTER
+                ;;
+            stop)
+                ocf_log info "${LH} post-stop ERROR"
+                #return $OCF_SUCCESS
+                #return $OCF_NOT_RUNNING
+                return $OCF_ERR_GENERIC
+                #exit $OCF_FAILED_MASTER
+                ;;
+            demote)
+                ocf_log info "${LH} post-demote FAILED MASTER"
+                #return $OCF_SUCCESS
+                #return $OCF_NOT_RUNNING
+                #return $OCF_ERR_GENERIC
+                exit $OCF_FAILED_MASTER
+            *)  ;;
+        esac
+    fi
+    return $OCF_SUCCESS
+}
+action_promote() {
+    local LH="${LL} action_promote():"
+    ocf_log info "${LH} FAILED MASTER"
+    #return $OCF_SUCCESS
+    #return $OCF_NOT_RUNNING
+    #return $OCF_ERR_GENERIC
+    exit $OCF_FAILED_MASTER
+}
+action_demote() {
+    local LH="${LL} action_demote():"
+    ocf_log info "${LH} FAILED MASTER"
+    #return $OCF_SUCCESS
+    #return $OCF_NOT_RUNNING
+    #return $OCF_ERR_GENERIC
+    exit $OCF_FAILED_MASTER
+}
+#######################################################################
+case "$1" in
+  meta-data)    echo meta_data
+                exit $OCF_SUCCESS;;
+  usage|help)   echo usage
+                exit $OCF_SUCCESS;;
+esac
+# What kind of method was invoked?
+case "$1" in
+  start)        action_start;;
+  stop)         action_stop;;
+  status)       action_status;;
+  monitor)      action_monitor;;
+  validate)     echo action_validate;;
+  promote)      action_promote;;
+  demote)       action_demote;;
+  notify)       action_notify;;
+  validate-all) echo action_validate;;
+  *)            usage;;
+esac
