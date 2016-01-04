@@ -4,7 +4,49 @@
 : ${OCF_FUNCTIONS_DIR=${OCF_ROOT}/lib/heartbeat}
 : ${HA_LOGTAG="ocf-dummy"}
 : ${HA_LOGFACILITY="daemon"}
-. ${OCF_FUNCTIONS_DIR}/ocf-shellfuncs
+# W/A https://github.com/ClusterLabs/resource-agents/issues/734
+#. ${OCF_FUNCTIONS_DIR}/ocf-shellfuncs
+ocf_run() {
+        local rc
+        local output
+        local verbose=1
+        local loglevel=err
+        local var
+
+        for var in 1 2
+        do
+            case "$1" in
+                "-q")
+                    verbose=""
+                    shift 1;;
+                "-info"|"-warn"|"-err")
+                    loglevel=`echo $1 | sed -e s/-//g`
+                    shift 1;;
+                *)
+                    ;;
+            esac
+        done
+
+        output=`"$@" 2>&1`
+        rc=$?
+        output=`echo $output`
+        if [ $rc -eq 0 ]; then
+            if [ "$verbose" -a ! -z "$output" ]; then
+                ocf_log info "$output"
+            fi
+            return $OCF_SUCCESS
+        else
+            if [ ! -z "$output" ]; then
+                ocf_log $loglevel "$output"
+            else
+                ocf_log $loglevel "command failed: $*"
+            fi
+            return $rc
+        fi
+}
+ocf_log() {
+      logger -p "${HA_LOGFACILITY}.${1}" -t "${HA_LOGTAG}" "${2}"
+}
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 LL="dummy"
 meta_data() {
@@ -24,6 +66,7 @@ action_status() {
 action_monitor() {
     local LH="${LL} action_monitor():"
     ocf_log info "${LH} It's OK"
+    ocf_run echo dummy ocf_run
     return $OCF_SUCCESS
 }
 action_start() {
