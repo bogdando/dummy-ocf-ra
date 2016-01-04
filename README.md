@@ -24,7 +24,6 @@ Create the dummy pacemaker resource (use either ``crm`` or ``pcs`` tool)
   meta notify=true ordered=false interleave=false master-max=1 master-node-max=1
 
 # crm configure primitive p_dummy ocf:dummy:dummy \
-        params erlang_cookie=DPMDALGUKEOMPTHWPYKC node_port=5672 \
         op monitor trace_ra=1 interval=30 timeout=60 \
         op monitor trace_ra=1 interval=27 role=Master timeout=60 \
         op monitor trace_ra=1 interval=103 role=Slave timeout=60 OCF_CHECK_LEVEL=30 \
@@ -37,6 +36,12 @@ Create the dummy pacemaker resource (use either ``crm`` or ``pcs`` tool)
 
 # crm configure ms p_dummy-master p_dummy \
         meta notify=true ordered=false interleave=false master-max=1 master-node-max=1
+```
+
+Note, for asymmetrical "Opt-In" clusters also enable the resource for each node, like
+```
+# pcs constraint location p_dummy prefers `crm_node -n`=100
+# crm configure location loc-`crm_node -n` p_dummy 100: `crm_node -n`
 ```
 
 Check results

@@ -2,11 +2,20 @@
 # A dummy resource for the pessimistic scenario
 # of the promote/demote the rabbitmq OCF RA
 : ${OCF_FUNCTIONS_DIR=${OCF_ROOT}/lib/heartbeat}
-: ${HA_LOGTAG="lrmd"}
+: ${HA_LOGTAG="ocf-dummy"}
 : ${HA_LOGFACILITY="daemon"}
 . ${OCF_FUNCTIONS_DIR}/ocf-shellfuncs
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 LL="dummy"
+meta_data() {
+cat <<END
+<?xml version="1.0"?>
+<!DOCTYPE resource-agent SYSTEM "ra-api-1.dtd">
+<resource-agent name="dummy">
+<version>1.0</version>
+</resource-agent>
+END
+}
 action_status() {
     local LH="${LL} action_status():"
     ocf_log info "${LH} I'm OK"
@@ -29,12 +38,12 @@ action_stop() {
 }
 action_notify() {
     local LH="${LL} action_notify():"
-    ocf_log info "${LH} Notifying..."
+    ocf_log info "${LH} Notifying ${OCF_RESKEY_CRM_meta_notify_type}:${OCF_RESKEY_CRM_meta_notify_operation}..."
     if [ "${OCF_RESKEY_CRM_meta_notify_type}" = 'pre' ] ; then
         # PRE- anything notify section
         case "$OCF_RESKEY_CRM_meta_notify_operation" in
             promote)
-                ocf_log info "${LH} pre-promote OK"
+                ocf_log info "${LH} pre-promote for '${OCF_RESKEY_CRM_meta_notify_promote_uname}' OK"
                 return $OCF_SUCCESS
                 #return $OCF_NOT_RUNNING
                 #return $OCF_ERR_GENERIC
@@ -48,32 +57,33 @@ action_notify() {
         # POST- anything notify section
         case "$OCF_RESKEY_CRM_meta_notify_operation" in
             promote)
-                ocf_log info "${LH} post-promote ERROR"
+                ocf_log info "${LH} post-promote for '${OCF_RESKEY_CRM_meta_notify_promote_uname}' ERROR"
                 #return $OCF_SUCCESS
                 #return $OCF_NOT_RUNNING
                 return $OCF_ERR_GENERIC
                 #exit $OCF_FAILED_MASTER
                 ;;
             start)
-                ocf_log info "${LH} post-start ERROR"
+                ocf_log info "${LH} post-start for '${OCF_RESKEY_CRM_meta_notify_start_uname}' ERROR"
                 #return $OCF_SUCCESS
                 #return $OCF_NOT_RUNNING
                 return $OCF_ERR_GENERIC
                 #exit $OCF_FAILED_MASTER
                 ;;
             stop)
-                ocf_log info "${LH} post-stop ERROR"
+                ocf_log info "${LH} post-stop for '${OCF_RESKEY_CRM_meta_notify_stop_uname}' ERROR"
                 #return $OCF_SUCCESS
                 #return $OCF_NOT_RUNNING
                 return $OCF_ERR_GENERIC
                 #exit $OCF_FAILED_MASTER
                 ;;
             demote)
-                ocf_log info "${LH} post-demote FAILED MASTER"
+                ocf_log info "${LH} post-demote for for '${OCF_RESKEY_CRM_meta_notify_demote_uname}' FAILED MASTER"
                 #return $OCF_SUCCESS
                 #return $OCF_NOT_RUNNING
                 #return $OCF_ERR_GENERIC
                 exit $OCF_FAILED_MASTER
+                ;;
             *)  ;;
         esac
     fi
@@ -97,7 +107,7 @@ action_demote() {
 }
 #######################################################################
 case "$1" in
-  meta-data)    echo meta_data
+  meta-data)    meta_data
                 exit $OCF_SUCCESS;;
   usage|help)   echo usage
                 exit $OCF_SUCCESS;;
