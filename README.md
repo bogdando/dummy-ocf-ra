@@ -77,4 +77,36 @@ ms p_dummy-master p_dummy \
 ```
 
 Note that the ``resource-agents>=3.9.5`` package is required in order to use the
-``trace_ra=1`` setting. Traces will be stored at the ``/var/lib/heartbeat/trace_ra/dummy`` dir.
+``trace_ra=1`` setting. Traces will be stored at the
+``/var/lib/heartbeat/trace_ra/dummy`` dir.
+
+Also note, a shell fork bomb is a known issue for the resource-agents<=3.9.5,
+see https://github.com/ClusterLabs/resource-agents/issues/734.
+
+## dummy plays
+By default, for each action or notify the dummy RA will return the
+``OCF_SUCCESS`` or the 3rd parameter given for the ``dummy_pop()`` call
+(see the dummy OCF script inline).
+
+You can controll that it shall return though. To do that, create a file like
+``/tmp/dummy_plays_monitor`` or ``/tmp/dummy_plays_post_promote`` containing a
+scripted sequence (placed in reverse order) of return codes for the action
+specified in the file name, for example:
+```
+$ cat /tmp/dummy_plays_monitor
+NOT_RUNNING
+NOT_RUNNING
+ERROR
+$ cat /tmp/dummy_plays_post_promote
+RUNNING_MASTER
+```
+This will force the dummy RA to play dead and return ``OCF_GENERIC_ERROR``
+then ``OCF_NOT_RUNNING`` twice for the next monitor actions (each return
+code will be popped from the file from down to top). While the nearest post
+promote notification will return ``OCF_RUNNING_MASTER`` once as well.
+Note that actions to play are not serialized and will run independently
+for each action or notification.
+
+Supported actions to play are:
+``ERROR, FAILED_MASTER, RUNNING_MASTER, SUCCESS, NOT_RUNNING``
+
