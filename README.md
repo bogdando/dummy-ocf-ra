@@ -110,3 +110,6 @@ for each action or notification.
 Supported actions to play are:
 ``ERROR, FAILED_MASTER, RUNNING_MASTER, SUCCESS, NOT_RUNNING``
 
+## dummy master wannabe
+If you wish some instance of the dummy to became a master, create
+the ``/tmp/dummy_master_wannabe`` file.

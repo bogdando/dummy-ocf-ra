@@ -56,7 +56,11 @@ action_status() {
 }
 action_monitor() {
     local LH="${LL} action_monitor():"
-    dummy_pop "/tmp/dummy_plays_monitor" "monitor"
+    if [ -f "/tmp/dummy_master_wannabe" ] ; then
+        dummy_pop "/tmp/dummy_plays_monitor" "monitor" RUNNING_MASTER
+    else
+        dummy_pop "/tmp/dummy_plays_monitor" "monitor"
+    fi
 }
 action_start() {
     local LH="${LL} action_start():"
