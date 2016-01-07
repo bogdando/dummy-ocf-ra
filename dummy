@@ -5,6 +5,9 @@
 : ${HA_LOGTAG="ocf-dummy"}
 : ${HA_LOGFACILITY="daemon"}
 . ${OCF_FUNCTIONS_DIR}/ocf-shellfuncs
+CRM_MASTER="${HA_SBIN_DIR}/crm_master -l reboot"
+SLAVE_SCORE=1
+MASTER_SCORE=1000
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 LL="dummy"
 # pop an action to play from a text file (from the last file line)
@@ -57,10 +60,12 @@ action_monitor() {
 }
 action_start() {
     local LH="${LL} action_start():"
+    $CRM_MASTER -v $SLAVE_SCORE
     dummy_pop "/tmp/dummy_plays_start" "start"
 }
 action_stop() {
     local LH="${LL} action_stop():"
+    $CRM_MASTER -D
     dummy_pop "/tmp/dummy_plays_stop" "stop"
 }
 action_notify() {
@@ -88,16 +93,16 @@ action_notify() {
         # POST- anything notify section
         case "$OCF_RESKEY_CRM_meta_notify_operation" in
             promote)
-                dummy_pop "/tmp/dummy_plays_post_promote" "post-promote for '${OCF_RESKEY_CRM_meta_notify_promote_uname}'" "ERROR"
+                dummy_pop "/tmp/dummy_plays_post_promote" "post-promote for '${OCF_RESKEY_CRM_meta_notify_promote_uname}'"
                 ;;
             start)
-                dummy_pop "/tmp/dummy_plays_post_start" "post-start for '${OCF_RESKEY_CRM_meta_notify_start_uname}'" "ERROR"
+                dummy_pop "/tmp/dummy_plays_post_start" "post-start for '${OCF_RESKEY_CRM_meta_notify_start_uname}'"
                 ;;
             stop)
-                dummy_pop "/tmp/dummy_plays_post_stop" "post-stop for '${OCF_RESKEY_CRM_meta_notify_stop_uname}'" "ERROR"
+                dummy_pop "/tmp/dummy_plays_post_stop" "post-stop for '${OCF_RESKEY_CRM_meta_notify_stop_uname}'"
                 ;;
             demote)
-                dummy_pop "/tmp/dummy_plays_post_demote" "post-demote for '${OCF_RESKEY_CRM_meta_notify_demote_uname}'" "FAILED_MASTER"
+                dummy_pop "/tmp/dummy_plays_post_demote" "post-demote for '${OCF_RESKEY_CRM_meta_notify_demote_uname}'"
                 ;;
             *)  ;;
         esac
@@ -106,11 +111,13 @@ action_notify() {
 }
 action_promote() {
     local LH="${LL} action_promote():"
-    dummy_pop "/tmp/dummy_plays_promote" "promote" "FAILED_MASTER"
+    $CRM_MASTER -v $MASTER_SCORE
+    dummy_pop "/tmp/dummy_plays_promote" "promote"
 }
 action_demote() {
     local LH="${LL} action_demote():"
-    dummy_pop "/tmp/dummy_plays_demote" "demote" "FAILED_MASTER"
+    $CRM_MASTER -v $SLAVE_SCORE
+    dummy_pop "/tmp/dummy_plays_demote" "demote"
 }
 #######################################################################
 case "$1" in
